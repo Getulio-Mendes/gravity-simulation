@@ -1,135 +1,115 @@
 import pygame
+import math
 
-def combinations(l):
-    result = []
-    for x in range(len(l) - 1):
-        ls = l[x+1:]
-        for y in ls:
-            result.append((l[x], y))
-    return result
+
+class Body:
+    def __init__(self, x, y, vx, vy, mass, color, radius):
+        self.x = x
+        self.y = y
+        self.vy = vy
+        self.vx = vx
+        self.mass = mass
+        self.color = color
+        self.radius = radius
+        self.trace = []
+
+    def draw(self, win):
+        x = self.x * SCALE + WIDTH / 2
+        y = self.y * SCALE + HEIGHT / 2
+
+        if len(self.trace) > 2:
+            traceLine = []
+            for point in self.trace:
+                x,y = point
+                x = x * SCALE + WIDTH / 2
+                y = y * SCALE + HEIGHT / 2
+                traceLine.append((x,y))
+            pygame.draw.lines(win, self.color, False, traceLine, 2)
+
+        pygame.draw.circle(win, self.color, (x, y), self.radius)
+
+    def attraction(self, other):
+        distance_x = other.x - self.x
+        distance_y = other.y - self.y
+        distance = math.sqrt(distance_x ** 2 + distance_y ** 2)
+
+        force = G * self.mass * other.mass / distance**2
+        theta = math.atan2(distance_y, distance_x)
+        force_x = math.cos(theta) * force
+        force_y = math.sin(theta) * force
+        return force_x, force_y
+
+    def updatePosition(self, planets):
+        total_fx = total_fy = 0
+        for planet in planets:
+            if self == planet:
+                continue
+
+            fx, fy = self.attraction(planet)
+            total_fx += fx
+            total_fy += fy
+
+        self.vx += total_fx / self.mass * TIMESTEP
+        self.vy += total_fy / self.mass * TIMESTEP
+
+        self.x += self.vx * TIMESTEP
+        self.y += self.vy * TIMESTEP
+        self.trace.append((self.x, self.y))
 
 
 PI = 3.14159265358979323
-SOLAR_MASS = 4 * PI * PI
-DAYS_PER_YEAR = 365.24
+AU = 149.6e6 * 1000
+G = 6.67428e-11
+TIMESTEP = 3600*24
 
-BODIES = {
-    'sun': ([0.0, 0.0, 0.0], [0.0, 0.0, 0.0], SOLAR_MASS,(255,255,255)),
+SCALE = 250 / AU
 
-    'jupiter': ([4.84143144246472090e+00,
-                 -1.16032004402742839e+00,
-                 -1.03622044471123109e-01],
-                [1.66007664274403694e-03 * DAYS_PER_YEAR,
-                 7.69901118419740425e-03 * DAYS_PER_YEAR,
-                 -6.90460016972063023e-05 * DAYS_PER_YEAR],
-                9.54791938424326609e-04 * SOLAR_MASS),
-
-    'saturn': ([8.34336671824457987e+00,
-                4.12479856412430479e+00,
-                -4.03523417114321381e-01],
-               [-2.76742510726862411e-03 * DAYS_PER_YEAR,
-                4.99852801234917238e-03 * DAYS_PER_YEAR,
-                2.30417297573763929e-05 * DAYS_PER_YEAR],
-               2.85885980666130812e-04 * SOLAR_MASS),
-
-    'uranus': ([1.28943695621391310e+01,
-                -1.51111514016986312e+01,
-                -2.23307578892655734e-01],
-               [2.96460137564761618e-03 * DAYS_PER_YEAR,
-                2.37847173959480950e-03 * DAYS_PER_YEAR,
-                -2.96589568540237556e-05 * DAYS_PER_YEAR],
-               4.36624404335156298e-05 * SOLAR_MASS),
-
-    'neptune': ([1.53796971148509165e+01,
-                 -2.59193146099879641e+01,
-                 1.79258772950371181e-01],
-                [2.68067772490389322e-03 * DAYS_PER_YEAR,
-                 1.62824170038242295e-03 * DAYS_PER_YEAR,
-                 -9.51592254519715870e-05 * DAYS_PER_YEAR],
-                5.15138902046611451e-05 * SOLAR_MASS)}
-
-
-SYSTEM = list(BODIES.values())
-PAIRS = combinations(SYSTEM)
-
-
-def advance(dt, bodies=SYSTEM, pairs=PAIRS):
-  for (([x1, y1, z1], v1, m1),
-       ([x2, y2, z2], v2, m2)) in pairs:
-      dx = x1 - x2
-      dy = y1 - y2
-      dz = z1 - z2
-      mag = dt * ((dx * dx + dy * dy + dz * dz) ** (-1.5))
-      b1m = m1 * mag
-      b2m = m2 * mag
-      v1[0] -= dx * b2m
-      v1[1] -= dy * b2m
-      v1[2] -= dz * b2m
-      v2[0] += dx * b1m
-      v2[1] += dy * b1m
-      v2[2] += dz * b1m
-      for (r, [vx, vy, vz], m) in bodies:
-        r[0] += dt * vx
-        r[1] += dt * vy
-        r[2] += dt * vz
-
-
-def report_energy(bodies=SYSTEM, pairs=PAIRS, e=0.0):
-
-    for (((x1, y1, z1), v1, m1),
-         ((x2, y2, z2), v2, m2)) in pairs:
-        dx = x1 - x2
-        dy = y1 - y2
-        dz = z1 - z2
-        e -= (m1 * m2) / ((dx * dx + dy * dy + dz * dz) ** 0.5)
-    for (r, [vx, vy, vz], m) in bodies:
-        e += m * (vx * vx + vy * vy + vz * vz) / 2.
-    print(f"{e:.9f}")
-
-
-def offset_momentum(ref, bodies=SYSTEM, px=0.0, py=0.0, pz=0.0):
-
-    for (r, [vx, vy, vz], m) in bodies:
-        px -= vx * m
-        py -= vy * m
-        pz -= vz * m
-    (r, v, m) = ref
-    v[0] = px / m
-    v[1] = py / m
-    v[2] = pz / m
+WIDTH = 800
+HEIGHT = 600
+WHITE = (255, 255,255)
 
 
 def main(ref='sun'):
     pygame.init()
-    run = true
+    run = True
     clock = pygame.time.Clock()
-    width, height = 800
-    
-    win = pygame.display.set_mode((width,height))
-    background = (33,33,33)
+
+    win = pygame.display.set_mode((WIDTH, HEIGHT))
+    background = (33, 33,33)
     pygame.display.set_caption("Simulador de Gravidade")
-    
-    offset_momentum(BODIES[ref])
-    
+
+    sun = Body(0, 0,0,0,1.98892 * 10**30,WHITE,50)
+
+    # position = AU
+    # vel = m/s
+    # mass = kg
+
+    earth = Body(-1 * AU, 0,0,29.783 * 1000,5.9742 * 10**24,WHITE,10)
+    mars = Body(-1.524 * AU, 0,0,24.077 * 1000, 6.39 * 10**23,WHITE,10)
+    mercury = Body(0.387 * AU, 0,0,-47.4 * 1000,3.30 * 10**23,WHITE,10)
+    venus = Body(0.723 * AU, 0,0,-35.02 * 1000,4.8685 * 10**24,WHITE,10)
+
+    bodies = [sun, earth,mars,mercury,venus]
+
     while run:
-      # Roda 60 vezes por segundo
-      clock.tick(60)
-      # Background da janela
-      win.fill(background)
-      # Update gráfico
-      pygame.display.update()
-      
-      for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-          run = false
-          
-      for body in bodies:
-        pygame.draw.circle(win,body[4],(0,0),10)
-        
-      advance(0.01)
-    
-    report_energy()
+        # Roda 60 vezes por segundo
+        clock.tick(60)
+        # Background da janela
+        win.fill(background)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+
+        for body in bodies:
+            body.updatePosition(bodies)
+            body.draw(win)
+
+        # Update gráfico
+        pygame.display.update()
+
     pygame.quit()
+
 
 if __name__ == '__main__':
     main()
