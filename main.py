@@ -1,6 +1,8 @@
 import pygame
 import math
 
+from arrow import draw_arrow
+
 
 class Body:
     def __init__(self, x, y, vx, vy, mass, color, radius):
@@ -12,6 +14,7 @@ class Body:
         self.color = color
         self.radius = radius
         self.trace = []
+        self.changed = False
 
     def print(self):
         print("Velocidade x: {}".format(self.vx))
@@ -43,6 +46,20 @@ class Body:
         force_x = math.cos(theta) * force
         force_y = math.sin(theta) * force
         return force_x, force_y
+    
+    def changeVel(self,x2,y2,SCALE):
+
+        if self.changed == False:
+            x1 = self.x * SCALE + WIDTH / 2
+            y1 = self.y * SCALE + HEIGHT / 2
+        
+            theta = math.atan2(x1 - x2, y1 - y2)
+            mod = math.dist([x1,y1],[x2,y2])
+
+            self.vx = self.vx + math.cos(theta) * mod * SCALE
+            self.vy = self.vy + math.sin(theta) * mod * SCALE
+            self.changed = True
+
 
     def updatePosition(self, planets):
         total_fx = total_fy = 0
@@ -60,6 +77,7 @@ class Body:
         self.x += self.vx * TIMESTEP
         self.y += self.vy * TIMESTEP
         self.trace.append((self.x, self.y))
+        self.changed = False
 
 PI = 3.14159265358979323
 AU = 149.6e6 * 1000
@@ -97,6 +115,16 @@ def checkCollision(x1,y1,r1,x2,y2,r2):
     if(math.dist([x1,y1],[x2,y2]) < r1 + r2):
         return True
 
+def velArrow(win,const,arrow):
+    x = arrow[0] * const.SCALE + WIDTH / 2
+    y = arrow[1] * const.SCALE + HEIGHT / 2
+
+    # Setinha
+
+    print("Desenhada")
+    draw_arrow(win,pygame.Vector2(x,y),pygame.Vector2(arrow[2],arrow[3]),pygame.Color("red"),4,12,12)
+
+
 def main(ref='sun'):
     pygame.init()
     const = gVar()
@@ -107,6 +135,7 @@ def main(ref='sun'):
     win = pygame.display.set_mode((WIDTH, HEIGHT))
     background = (33, 33,33)
     pygame.display.set_caption("Simulador de Gravidade")
+
 
     sun = Body(0, 0,0,0,1.98892 * 10**30,WHITE,50)
 
@@ -120,6 +149,8 @@ def main(ref='sun'):
     venus = Body(0.723 * AU, 0,0,-35.02 * 1000,4.8685 * 10**24,WHITE,10)
 
     bodies = [sun, earth,mars,mercury,venus]
+    mouseMotion = None
+    arrows = []
 
     while run:
         # Roda 60 vezes por segundo
@@ -133,7 +164,24 @@ def main(ref='sun'):
 
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
+                    arrows = []
                     const.pause()
+
+            elif event.type == pygame.MOUSEBUTTONUP:
+                if const.PAUSE:
+                    if(dragged):
+                        
+                        arrows.append((x,y,mouseMotion[0],mouseMotion[1],mouseMotion[2]))
+                        print("Seta")
+
+                        mouseMotion = None
+                        dragged = False
+            
+            elif event.type == pygame.MOUSEMOTION:
+                if mouseMotion != None:
+                    mouseMotion[0] = event.pos[0]
+                    mouseMotion[1] = event.pos[1]
+                    dragged = True
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 5:
@@ -148,15 +196,22 @@ def main(ref='sun'):
                         y = bodie.y * const.SCALE + HEIGHT / 2
                         if(checkCollision(x,y,bodie.radius/const.ZOOM,event.pos[0],event.pos[1],1)):
                             bodie.print()
+                            # Seleciona o corpo cliclado
+                            mouseMotion = [event.pos[0],event.pos[1],bodie]
 
-        if not const.PAUSE:
-
-            for body in bodies:
+        for body in bodies:
+            if not const.PAUSE:
                 body.updatePosition(bodies)
-                body.draw(win,const.ZOOM,const.SCALE)
 
-            # Update gráfico
-            pygame.display.update()
+            for arrow in arrows:
+                if arrow[4] == bodie:
+                   velArrow(win,const,arrow) 
+                   print("Update do corpo")
+                   bodie.changeVel(arrow[2],arrow[3],const.SCALE)
+            body.draw(win,const.ZOOM,const.SCALE)
+
+        # Update gráfico
+        pygame.display.update()
 
     pygame.quit()
 
