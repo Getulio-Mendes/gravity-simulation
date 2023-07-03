@@ -13,7 +13,7 @@ class Body:
         self.radius = radius
         self.trace = []
 
-    def draw(self, win):
+    def draw(self, win,ZOOM,SCALE):
         x = self.x * SCALE + WIDTH / 2
         y = self.y * SCALE + HEIGHT / 2
 
@@ -26,7 +26,7 @@ class Body:
                 traceLine.append((x,y))
             pygame.draw.lines(win, self.color, False, traceLine, 2)
 
-        pygame.draw.circle(win, self.color, (x, y), self.radius)
+        pygame.draw.circle(win, self.color, (x, y), self.radius / ZOOM)
 
     def attraction(self, other):
         distance_x = other.x - self.x
@@ -56,21 +56,38 @@ class Body:
         self.y += self.vy * TIMESTEP
         self.trace.append((self.x, self.y))
 
-
 PI = 3.14159265358979323
 AU = 149.6e6 * 1000
 G = 6.67428e-11
 TIMESTEP = 3600*24
-
-SCALE = 250 / AU
+WHITE = (255, 255,255)
 
 WIDTH = 800
 HEIGHT = 600
-WHITE = (255, 255,255)
 
+class Zoom:
+
+    def __init__(self):
+        self.ZOOM = 1
+        self.SCALE = 250 / AU
+
+    def addZoom(self,where,bodies):
+        if where:
+            if(self.ZOOM < 2):
+                self.ZOOM = self.ZOOM + 0.1
+                self.SCALE = self.SCALE - self.SCALE * 0.1
+        else:
+            if(self.ZOOM > 0.5):
+                self.ZOOM = self.ZOOM - 0.1
+                self.SCALE = self.SCALE + self.SCALE * 0.1
+
+        for bodie in bodies:
+            bodie.trace = []
 
 def main(ref='sun'):
     pygame.init()
+    zoom = Zoom()
+
     run = True
     clock = pygame.time.Clock()
 
@@ -100,10 +117,17 @@ def main(ref='sun'):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 5:
+                    zoom.addZoom(1,bodies)
+
+                elif event.button == 4:
+                    zoom.addZoom(0,bodies)
+
 
         for body in bodies:
             body.updatePosition(bodies)
-            body.draw(win)
+            body.draw(win,zoom.ZOOM,zoom.SCALE)
 
         # Update gráfico
         pygame.display.update()
