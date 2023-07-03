@@ -5,7 +5,7 @@ from arrow import draw_arrow
 
 
 class Body:
-    def __init__(self, x, y, vx, vy, mass, color, radius):
+    def __init__(self, x, y, vx, vy, mass, color, radius,name):
         self.x = x
         self.y = y
         self.vy = vy
@@ -13,6 +13,7 @@ class Body:
         self.mass = mass
         self.color = color
         self.radius = radius
+        self.name = name
         self.trace = []
         self.changed = False
 
@@ -121,7 +122,6 @@ def velArrow(win,const,arrow):
 
     # Setinha
 
-    print("Desenhada")
     draw_arrow(win,pygame.Vector2(x,y),pygame.Vector2(arrow[2],arrow[3]),pygame.Color("red"),4,12,12)
 
 
@@ -137,16 +137,16 @@ def main(ref='sun'):
     pygame.display.set_caption("Simulador de Gravidade")
 
 
-    sun = Body(0, 0,0,0,1.98892 * 10**30,WHITE,50)
+    sun = Body(0, 0,0,0,1.98892 * 10**30,WHITE,50,"Sol")
 
     # position = AU
     # vel = m/s
     # mass = kg
 
-    earth = Body(-1 * AU, 0,0,29.783 * 1000,5.9742 * 10**24,WHITE,10)
-    mars = Body(-1.524 * AU, 0,0,24.077 * 1000, 6.39 * 10**23,WHITE,10)
-    mercury = Body(0.387 * AU, 0,0,-47.4 * 1000,3.30 * 10**23,WHITE,10)
-    venus = Body(0.723 * AU, 0,0,-35.02 * 1000,4.8685 * 10**24,WHITE,10)
+    earth = Body(-1 * AU, 0,0,29.783 * 1000,5.9742 * 10**24,WHITE,10,"Terra")
+    mars = Body(-1.524 * AU, 0,0,24.077 * 1000, 6.39 * 10**23,WHITE,10,"Marte")
+    mercury = Body(0.387 * AU, 0,0,-47.4 * 1000,3.30 * 10**23,WHITE,10,"Mercúrio")
+    venus = Body(0.723 * AU, 0,0,-35.02 * 1000,4.8685 * 10**24,WHITE,10,"Vênus")
 
     bodies = [sun, earth,mars,mercury,venus]
     mouseMotion = None
@@ -170,9 +170,8 @@ def main(ref='sun'):
             elif event.type == pygame.MOUSEBUTTONUP:
                 if const.PAUSE:
                     if(dragged):
-                        
-                        arrows.append((x,y,mouseMotion[0],mouseMotion[1],mouseMotion[2]))
-                        print("Seta")
+
+                        arrows.append((event.pos[0],event.pos[1],mouseMotion[0],mouseMotion[1],mouseMotion[2]))
 
                         mouseMotion = None
                         dragged = False
@@ -197,17 +196,18 @@ def main(ref='sun'):
                         if(checkCollision(x,y,bodie.radius/const.ZOOM,event.pos[0],event.pos[1],1)):
                             bodie.print()
                             # Seleciona o corpo cliclado
-                            mouseMotion = [event.pos[0],event.pos[1],bodie]
+                            mouseMotion = [event.pos[0],event.pos[1],bodie.name]
 
         for body in bodies:
             if not const.PAUSE:
                 body.updatePosition(bodies)
 
             for arrow in arrows:
-                if arrow[4] == bodie:
-                   velArrow(win,const,arrow) 
-                   print("Update do corpo")
-                   bodie.changeVel(arrow[2],arrow[3],const.SCALE)
+                velArrow(win,const,arrow) 
+
+                if arrow[4] == bodie.name:
+                    bodie.changeVel(arrow[2],arrow[3],const.SCALE)
+
             body.draw(win,const.ZOOM,const.SCALE)
 
         # Update gráfico
