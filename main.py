@@ -13,6 +13,11 @@ class Body:
         self.radius = radius
         self.trace = []
 
+    def print(self):
+        print("Velocidade x: {}".format(self.vx))
+        print("Velocidade y: {}".format(self.vy))
+        print("Massa : {}".format(self.mass))
+
     def draw(self, win,ZOOM,SCALE):
         x = self.x * SCALE + WIDTH / 2
         y = self.y * SCALE + HEIGHT / 2
@@ -65,11 +70,12 @@ WHITE = (255, 255,255)
 WIDTH = 800
 HEIGHT = 600
 
-class Zoom:
+class gVar:
 
     def __init__(self):
         self.ZOOM = 1
         self.SCALE = 250 / AU
+        self.PAUSE = False
 
     def addZoom(self,where,bodies):
         if where:
@@ -84,9 +90,16 @@ class Zoom:
         for bodie in bodies:
             bodie.trace = []
 
+    def pause(self):
+        self.PAUSE = not self.PAUSE
+
+def checkCollision(x1,y1,r1,x2,y2,r2):
+    if(math.dist([x1,y1],[x2,y2]) < r1 + r2):
+        return True
+
 def main(ref='sun'):
     pygame.init()
-    zoom = Zoom()
+    const = gVar()
 
     run = True
     clock = pygame.time.Clock()
@@ -117,20 +130,33 @@ def main(ref='sun'):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
+
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    const.pause()
+
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 5:
-                    zoom.addZoom(1,bodies)
+                    const.addZoom(1,bodies)
 
                 elif event.button == 4:
-                    zoom.addZoom(0,bodies)
+                    const.addZoom(0,bodies)
 
+                elif event.button == 1:
+                    for bodie in bodies:
+                        x = bodie.x * const.SCALE + WIDTH / 2
+                        y = bodie.y * const.SCALE + HEIGHT / 2
+                        if(checkCollision(x,y,bodie.radius/const.ZOOM,event.pos[0],event.pos[1],1)):
+                            bodie.print()
 
-        for body in bodies:
-            body.updatePosition(bodies)
-            body.draw(win,zoom.ZOOM,zoom.SCALE)
+        if not const.PAUSE:
 
-        # Update gráfico
-        pygame.display.update()
+            for body in bodies:
+                body.updatePosition(bodies)
+                body.draw(win,const.ZOOM,const.SCALE)
+
+            # Update gráfico
+            pygame.display.update()
 
     pygame.quit()
 
