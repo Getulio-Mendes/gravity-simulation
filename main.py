@@ -19,9 +19,9 @@ class Body:
 
     def print(self):
         print("\t------ {} ------".format(self.name))
-        print("Velocidade x: {}".format(self.vx))
-        print("Velocidade y: {}".format(self.vy))
-        print("Massa : {}".format(self.mass))
+        print("Velocidade x: {} m/s".format(self.vx))
+        print("Velocidade y: {} ms/s".format(self.vy))
+        print("Massa : {} kg".format(self.mass))
 
     def draw(self, win,ZOOM,SCALE):
         x = self.x * SCALE + WIDTH / 2
@@ -78,7 +78,11 @@ class Body:
 
         self.x += self.vx * TIMESTEP
         self.y += self.vy * TIMESTEP
+
         self.trace.append((self.x, self.y))
+
+        if len(self.trace) > 100:
+            self.trace.pop(0)
         self.changed = False
 
 class gVar:
@@ -106,26 +110,32 @@ class gVar:
 
 
 PI = 3.14159265358979323
+# AU em metros
 AU = 149.6e6 * 1000
 G = 6.67428e-11
+# Tick da simulação = 1 dia
 TIMESTEP = 3600*24
-WHITE = (255, 255,255)
 
-WIDTH = 800
-HEIGHT = 600
+WIDTH = 900
+HEIGHT = 700
 
 def bodiesInit():
-    sun = Body(0, 0,0,0,1.98892 * 10**30,WHITE,50,"Sol")
-
+    
     # position = AU
     # vel = m/s
     # mass = kg
 
-    earth = Body(-1 * AU, 0,0,29.783 * 1000,5.9742 * 10**24,WHITE,10,"Terra")
-    mars = Body(-1.524 * AU, 0,0,24.077 * 1000, 6.39 * 10**23,WHITE,10,"Marte")
-    mercury = Body(0.387 * AU, 0,0,-47.4 * 1000,3.30 * 10**23,WHITE,10,"Mercúrio")
-    venus = Body(0.723 * AU, 0,0,-35.02 * 1000,4.8685 * 10**24,WHITE,10,"Vênus")
+    sun = Body(0, 0,0,0,1.98892 * 10**30,
+            pygame.Color("gold"),50,"Sol")
 
+    earth = Body(-1 * AU, 0,0,29.783 * 1000,5.9742 * 10**24,
+            pygame.Color("aquamarine2"),10,"Terra")
+    mars = Body(-1.524 * AU, 0,0,24.077 * 1000, 6.39 * 10**23,
+            pygame.Color("brown3"),10,"Marte")
+    mercury = Body(0.387 * AU, 0,0,-47.4 * 1000,3.30 * 10**23,
+            pygame.Color("darkgray"),10,"Mercúrio")
+    venus = Body(0.723 * AU, 0,0,-35.02 * 1000,4.8685 * 10**24,
+            pygame.Color("darkorange3"),10,"Vênus")
     return [sun, earth,mars,mercury,venus]
 
 
@@ -172,6 +182,7 @@ def main(ref='sun'):
                     const.pause()
                 elif event.key == pygame.K_ESCAPE:
                     bodies = bodiesInit()
+                    const.SCALE = 250 / AU
 
             elif event.type == pygame.MOUSEBUTTONUP:
                 if const.PAUSE:
