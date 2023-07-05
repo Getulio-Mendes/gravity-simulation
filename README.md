@@ -24,8 +24,44 @@ Para esse exemplo temos como entrada:
 
 Todos objetos da classe ```BodiesInit```, que tem o objetivo apenas de inicializar as posições, velocidades e cores dos planetas citados acima.
 
-Exemplo de execução do arquivo de entrada:
+É possível alterar a velocidade dos planetas,e o sentido da mesma; basta apertar a tecla ```SPACE```, oquê vai pausar a simulação, durante esse processo é possível fazer as alterações na velocidade, é necessário 'clicar' em um planeta e arrastar para um ponto que queira, quanto mais 'longe' maior será o módulo da velocidade e também o sentido é importante.
 
+
+exemplo de alteração de velocidade e sentido:
+
+
+<img src="img\vetores orbitas.png" alt="Simulation" width="400" style="display: block; margin: auto;">
+
+
+Após apertar a tecla ```SPACE``` denovo, despausamos a simulação.
+
+
+
+<img src="img\execução orbitas.png" alt="Simulation" width="400" style="display: block; margin: auto;">
+
+
+
+## Exemplo de arquivo de entrada (```input.data```):
+
+
+<img src="img\Inputdata exemplo.png" alt="Simulation" width="600" style="display: block; margin: auto;">
+
+
+Para a inclusão de novos corpos no programa deve-se seguir as seguintes diretivas.
+
++ ```nome``` 
++ ```posição em X```.
++ ```posição em Y```.
++ ```Massa do corpo```.
++ ```Velocidade em X```.
++ ```Velocidade em Y```.
++ ```Cor```.
++ ```Raio do corpo```.
+
+
+De maneira mais direta: nome: ```nome_desejado``` x:```posição_x desejada``` y:```posição_y desejada``` massa:```massa desejada``` vx:```velocidade_x desejada``` vy:```velocidade_y desejada``` cor:```cor desejada``` raio:```raio desejado```.
+
+Exemplo de execução do arquivo de entrada:
 
 <img src="img\Simulação de Órbita inputdata.png" alt="Simulation" width="400" style="display: block; margin: auto;">
 
