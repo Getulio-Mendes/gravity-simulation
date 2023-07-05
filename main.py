@@ -189,8 +189,10 @@ def bodiesInit(custom):
             pygame.Color("darkgray"),10,"Mercúrio")
         venus = Body(0.723 * AU, 0,0,-35.02 * 1000,4.8685 * 10**24,
             pygame.Color("darkorange3"),10,"Vênus")
-        
-        return [sun, earth,mars,mercury,venus]
+        saturn = Body(-1.61 * AU,0,0, 27.3886 * 1000 ,5.683 * 10**26, 
+            pygame.Color("antiquewhite1"), 15,"Saturno") 
+
+        return [sun, earth,mars,mercury,venus,saturn]
 
 
 def checkCollision(x1,y1,r1,x2,y2,r2):
