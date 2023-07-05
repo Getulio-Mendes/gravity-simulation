@@ -1,5 +1,6 @@
 import pygame
 import math
+import re
 
 from arrow import draw_arrow
 
@@ -119,24 +120,76 @@ TIMESTEP = 3600*24
 WIDTH = 900
 HEIGHT = 700
 
-def bodiesInit():
+def bodiesInit(custom,const):
     
     # position = AU
     # vel = m/s
     # mass = kg
+    bodies = []
 
-    sun = Body(0, 0,0,0,1.98892 * 10**30,
+    if custom:
+        input = open("input.data","r")
+        for line in input.readlines():
+            x = re.search("x: [0-9]+",line)
+            x = x.group()
+            x = x.split()[-1]
+            x = eval(x)
+            x = x*const.SCALE
+
+            y = re.search("y: [0-9]+",line)
+            y = y.group()
+            y = y.split()[-1]
+            y = eval(y)
+            y = y*const.SCALE
+
+            vx = re.search("vx: [0-9]+",line)
+            vx = vx.group()
+            vx = vx.split()[-1]
+            vx = eval(vx)
+
+            vy = re.search("vy: [0-9]+",line)
+            vy = vy.group()
+            vy = vy.split()[-1]
+            vy = eval(vy)
+
+            massa = re.search("massa: [0-9]+",line)
+            massa = massa.group()
+            massa = massa.split()[-1]
+            massa = eval(massa)
+
+            cor = re.search("cor: \w+",line)
+            cor = cor.group()
+            cor = cor.split()[-1]
+
+            r = re.search("raio: [0-9]+",line)
+            r = r.group()
+            r = r.split()[-1]
+            r = eval(r)
+
+            name = re.search("nome: \w+",line)
+            name = name.group()
+            name = name.split()[-1]
+
+            bodies.append(Body(x,y,vx,vy,massa,pygame.Color(cor),r,name))
+
+        input.close()
+        return bodies
+
+    else:
+
+        sun = Body(0, 0,0,0,1.98892 * 10**30,
             pygame.Color("gold"),50,"Sol")
 
-    earth = Body(-1 * AU, 0,0,29.783 * 1000,5.9742 * 10**24,
+        earth = Body(-1 * AU, 0,0,29.783 * 1000,5.9742 * 10**24,
             pygame.Color("aquamarine2"),10,"Terra")
-    mars = Body(-1.524 * AU, 0,0,24.077 * 1000, 6.39 * 10**23,
+        mars = Body(-1.524 * AU, 0,0,24.077 * 1000, 6.39 * 10**23,
             pygame.Color("brown3"),10,"Marte")
-    mercury = Body(0.387 * AU, 0,0,-47.4 * 1000,3.30 * 10**23,
+        mercury = Body(0.387 * AU, 0,0,-47.4 * 1000,3.30 * 10**23,
             pygame.Color("darkgray"),10,"Mercúrio")
-    venus = Body(0.723 * AU, 0,0,-35.02 * 1000,4.8685 * 10**24,
+        venus = Body(0.723 * AU, 0,0,-35.02 * 1000,4.8685 * 10**24,
             pygame.Color("darkorange3"),10,"Vênus")
-    return [sun, earth,mars,mercury,venus]
+        
+        return [sun, earth,mars,mercury,venus]
 
 
 def checkCollision(x1,y1,r1,x2,y2,r2):
@@ -150,20 +203,27 @@ def velArrow(win,const,arrow):
 
 
 def main(ref='sun'):
+    custom = input("Utilizar uma simulação pronta? (S/N) ")
+
+    if custom.lower() in ["sim","s"]:
+        custom = False
+    else:
+        custom = True
+
     pygame.init()
     const = gVar()
 
-    run = True
     clock = pygame.time.Clock()
 
     win = pygame.display.set_mode((WIDTH, HEIGHT))
     background = (33, 33,33)
     pygame.display.set_caption("Simulador de Gravidade")
 
+    bodies = bodiesInit(custom,const)
 
-    bodies = bodiesInit()
     mouseMotion = None
     dragged = False
+    run = True
     arrows = []
 
     while run:
@@ -177,15 +237,18 @@ def main(ref='sun'):
                 run = False
 
             elif event.type == pygame.KEYDOWN:
+                # Pausa ao apertar espaço
                 if event.key == pygame.K_SPACE:
                     arrows = []
                     const.pause()
+                # reseta ao apertar ESC
                 elif event.key == pygame.K_ESCAPE:
-                    bodies = bodiesInit()
+                    bodies = bodiesInit(custom,const)
                     const.SCALE = 250 / AU
 
             elif event.type == pygame.MOUSEBUTTONUP:
                 if const.PAUSE:
+                    # Calcula a seta
                     if(dragged and mouseMotion[2].changed == False):
                         arrows.append((event.pos[0],event.pos[1],mouseMotion[0],mouseMotion[1],mouseMotion[2]))
 
@@ -193,18 +256,22 @@ def main(ref='sun'):
                     dragged = False
             
             elif event.type == pygame.MOUSEMOTION:
+                # Drag da seta
                 if mouseMotion != None:
                     if (math.fabs(event.pos[0] - mouseMotion[0]) > 10):
                         if(math.fabs(event.pos[1] - mouseMotion[1]) > 10):
                             dragged = True
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
+                # Zoom in
                 if event.button == 5:
                     const.addZoom(1,bodies)
 
+                # Zoom out
                 elif event.button == 4:
                     const.addZoom(0,bodies)
 
+                # printa as informação quando o corpo é cliclado
                 elif event.button == 1:
                     for body in bodies:
                         x = body.x * const.SCALE + WIDTH /2
@@ -214,9 +281,11 @@ def main(ref='sun'):
                             # Seleciona o corpo cliclado
                             mouseMotion = [x,y,body]
 
+        # Desenha as setas
         for arrow in arrows:
             velArrow(win,const,arrow) 
 
+        # Desenha e atualiza os corpos
         for body in bodies:
             if not const.PAUSE:
                 body.updatePosition(bodies)
@@ -231,7 +300,6 @@ def main(ref='sun'):
         pygame.display.update()
 
     pygame.quit()
-
 
 if __name__ == '__main__':
     main()
