@@ -59,8 +59,8 @@ class Body:
             theta = math.atan2(y2 - y1, x2 - x1)
             mod = math.dist([x2,y2],[x1,y1])
 
-            self.vx = self.vx + math.cos(theta) * mod * 100
-            self.vy = self.vy + math.sin(theta) * mod * 100
+            self.vx = math.cos(theta) * mod * 100
+            self.vy = math.sin(theta) * mod * 100
             self.changed = True
 
 
@@ -120,7 +120,7 @@ TIMESTEP = 3600*24
 WIDTH = 900
 HEIGHT = 700
 
-def bodiesInit(custom,const):
+def bodiesInit(custom):
     
     # position = AU
     # vel = m/s
@@ -130,29 +130,29 @@ def bodiesInit(custom,const):
     if custom:
         input = open("input.data","r")
         for line in input.readlines():
-            x = re.search("x: [0-9]+",line)
+            x = re.search("x: [0-9e*,.-]+",line)
             x = x.group()
             x = x.split()[-1]
             x = eval(x)
-            x = x*const.SCALE
+            x = x*AU
 
-            y = re.search("y: [0-9]+",line)
+            y = re.search("y: [0-9e*,.-]+",line)
             y = y.group()
             y = y.split()[-1]
             y = eval(y)
-            y = y*const.SCALE
+            y = y*AU
 
-            vx = re.search("vx: [0-9]+",line)
+            vx = re.search("vx: [0-9e*,.-]+",line)
             vx = vx.group()
             vx = vx.split()[-1]
             vx = eval(vx)
 
-            vy = re.search("vy: [0-9]+",line)
+            vy = re.search("vy: [0-9e*,.-]+",line)
             vy = vy.group()
             vy = vy.split()[-1]
             vy = eval(vy)
 
-            massa = re.search("massa: [0-9]+",line)
+            massa = re.search("massa: [0-9e*,.-]+",line)
             massa = massa.group()
             massa = massa.split()[-1]
             massa = eval(massa)
@@ -161,7 +161,7 @@ def bodiesInit(custom,const):
             cor = cor.group()
             cor = cor.split()[-1]
 
-            r = re.search("raio: [0-9]+",line)
+            r = re.search("raio: [0-9e*,.-]+",line)
             r = r.group()
             r = r.split()[-1]
             r = eval(r)
@@ -170,7 +170,8 @@ def bodiesInit(custom,const):
             name = name.group()
             name = name.split()[-1]
 
-            bodies.append(Body(x,y,vx,vy,massa,pygame.Color(cor),r,name))
+            newB = Body(x,y,vx,vy,massa,pygame.Color(cor),r,name)
+            bodies.append(newB)
 
         input.close()
         return bodies
@@ -219,7 +220,7 @@ def main(ref='sun'):
     background = (33, 33,33)
     pygame.display.set_caption("Simulador de Gravidade")
 
-    bodies = bodiesInit(custom,const)
+    bodies = bodiesInit(custom)
 
     mouseMotion = None
     dragged = False
@@ -243,7 +244,7 @@ def main(ref='sun'):
                     const.pause()
                 # reseta ao apertar ESC
                 elif event.key == pygame.K_ESCAPE:
-                    bodies = bodiesInit(custom,const)
+                    bodies = bodiesInit(custom)
                     const.SCALE = 250 / AU
 
             elif event.type == pygame.MOUSEBUTTONUP:
